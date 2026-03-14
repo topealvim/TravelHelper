@@ -69,9 +69,51 @@ BLOCKS MODE:                    HOURLY MODE:
 +-----------------------+
 ```
 
+### Day View with Map (responsive)
+```
+DESKTOP (side-by-side):
++------------------------------+-------------------------------+
+| ACTIVITIES                   | GOOGLE MAP                    |
+|                              |                               |
+| ☀ Morning                     |     [Interactive Map]          |
+| 📍 La Sagrada Familia         |                               |
+|    9:00 - 11:00              |     A ── 15min walk ── B      |
+|                              |     │                  │      |
+|  🚶 15 min walk · 1.2 km     |     │    12min metro   │      |
+|  🚇 12 min metro (L4→L3)     |     │        ↓         │      |
+|                              |     C ◄────────────────┘      |
+| 📍 Park Güell                 |                               |
+|    11:30 - 13:00             |     Pins: A, B, C             |
+|                              |     Route line connecting all |
+| 🌤 Afternoon                   |                               |
+| 📍 La Boqueria Market         |     Click activity → map      |
+|    13:30 - 15:00             |     pans + highlights pin     |
++------------------------------+-------------------------------+
+
+MOBILE (toggle overlay):
++---------------------------+
+| [📍 Show Map]              |
+|                           |
+| ☀ Morning                  |
+| 📍 La Sagrada Familia      |
+|    9:00 - 11:00           |
+|  🚶 15 min · 🚇 12 min     |
+| 📍 Park Güell              |
+|    11:30 - 13:00          |
+|                           |
+| (tap Show Map → full      |
+|  screen map overlay with  |
+|  all pins + route)        |
++---------------------------+
+```
+
 ### Key UI Interactions
 - **Drag & drop** activities between time slots
 - **Inline editing** — click any activity to edit details (location, notes, links, cost)
+- **Location autocomplete** — Google Places autocomplete when adding/editing activities
+- **Interactive map** — numbered pins (A→B→C) for day activities, connected route line
+- **Travel segments** — between each activity, shows distance + duration for walk/transit/drive
+- **Click activity ↔ map sync** — click an activity to highlight its pin; click a pin to scroll to the activity
 - **Color-coded categories** — food, transport, activity, accommodation, free time
 - **Member indicators** — small avatar on activities to show who added it
 - **Voting** — thumbs up/down on activities so family can express preferences
@@ -79,7 +121,7 @@ BLOCKS MODE:                    HOURLY MODE:
 
 ### Pages
 1. **Home/Dashboard** — list of trips, create new trip
-2. **Trip View** — the main planning interface (week + day views)
+2. **Trip View** — the main planning interface (week + day views + map)
 3. **Trip History** — full audit trail with ability to revert changes
 4. **Invite page** — shareable link to join a trip
 
@@ -95,6 +137,7 @@ BLOCKS MODE:                    HOURLY MODE:
 | Database       | **Supabase (PostgreSQL)** | Free tier, real-time, RLS, auth | Free |
 | Auth           | **Supabase Auth (Google OAuth)** | Integrated with DB, handles Google sign-in | Free |
 | AI Integration | **MCP Server → Claude Desktop** | Uses your existing Claude subscription | Free |
+| Maps           | **Google Maps JS API + Directions + Places** | 10K free req/mo each — family use is ~1-5% | Free |
 | Hosting        | **Vercel**              | Free tier, auto-deploy from GitHub | Free |
 | Real-time      | **Supabase Realtime**   | Built-in, no extra infra | Free |
 | **Total**      |                        |                                        | **$0/mo** |
@@ -165,6 +208,9 @@ CREATE TABLE activities (
   category text,             -- 'food' | 'transport' | 'activity' | 'accommodation' | 'free'
   location text,
   location_url text,         -- Google Maps link, etc.
+  place_id text,             -- Google Places ID (for precise map pin)
+  latitude decimal,          -- GPS coordinates
+  longitude decimal,         -- GPS coordinates
   cost decimal,
   currency text DEFAULT 'USD',
   sort_order integer DEFAULT 0,
@@ -240,9 +286,13 @@ TravelHelper/
 │   │   │   ├── WeekView.tsx      # Weekly calendar grid
 │   │   │   ├── DayView.tsx       # Day detail (blocks + hourly toggle)
 │   │   │   ├── ActivityCard.tsx  # Draggable activity card
-│   │   │   ├── ActivityForm.tsx  # Add/edit activity modal
+│   │   │   ├── ActivityForm.tsx  # Add/edit activity modal (with Places autocomplete)
 │   │   │   ├── VoteButtons.tsx   # Thumbs up/down
 │   │   │   └── MemberAvatars.tsx
+│   │   ├── map/
+│   │   │   ├── TripMap.tsx       # Google Maps with activity pins + route
+│   │   │   ├── TravelSegment.tsx # Distance/duration card between activities
+│   │   │   └── PlaceAutocomplete.tsx # Google Places autocomplete input
 │   │   ├── history/
 │   │   │   ├── AuditFeed.tsx     # Activity feed sidebar
 │   │   │   └── AuditEntry.tsx    # Single audit log entry
@@ -255,6 +305,7 @@ TravelHelper/
 │   │   │   ├── server.ts         # Server client
 │   │   │   └── middleware.ts     # Auth middleware
 │   │   ├── audit.ts              # Audit trail helpers
+│   │   ├── google-maps.ts        # Maps API loader + helpers
 │   │   └── types.ts              # TypeScript types
 │   └── hooks/
 │       ├── useTrip.ts            # Trip data + real-time subscription
@@ -315,9 +366,14 @@ TravelHelper/
 - [ ] Dashboard: list trips, create trip
 - [ ] Basic trip view (week grid, click to see day)
 
-### Phase 2 — Planning Interface
+### Phase 2 — Planning Interface + Maps
 - [ ] Day view with block/hourly toggle
 - [ ] Activity CRUD (add, edit, delete, reorder)
+- [ ] Google Places autocomplete for location input
+- [ ] Embedded Google Map with numbered activity pins (A→B→C)
+- [ ] Travel segments between activities (distance + walk/transit/drive options)
+- [ ] Click-to-sync between activity list and map pins
+- [ ] Responsive: side-by-side on desktop, toggle overlay on mobile
 - [ ] Drag & drop between slots
 - [ ] Category color coding
 - [ ] Member avatars on activities
