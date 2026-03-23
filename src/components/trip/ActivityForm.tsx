@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PlacesAutocomplete } from "@/components/maps/PlacesAutocomplete";
 import type { Activity, ActivityCategory } from "@/lib/types";
 
 interface ActivityFormProps {
@@ -43,6 +44,9 @@ export function ActivityForm({
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [location, setLocation] = useState("");
+  const [placeId, setPlaceId] = useState<string | null>(null);
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
   const [cost, setCost] = useState("");
   const [block, setBlock] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
@@ -55,6 +59,9 @@ export function ActivityForm({
       setStartTime(editActivity.start_time || "");
       setEndTime(editActivity.end_time || "");
       setLocation(editActivity.location || "");
+      setPlaceId(editActivity.place_id || null);
+      setLatitude(editActivity.latitude || null);
+      setLongitude(editActivity.longitude || null);
       setCost(editActivity.cost?.toString() || "");
       setBlock(editActivity.block || "");
     } else {
@@ -64,6 +71,9 @@ export function ActivityForm({
       setStartTime("");
       setEndTime("");
       setLocation("");
+      setPlaceId(null);
+      setLatitude(null);
+      setLongitude(null);
       setCost("");
       setBlock("");
     }
@@ -82,6 +92,9 @@ export function ActivityForm({
         start_time: startTime || null,
         end_time: endTime || null,
         location: location || null,
+        place_id: placeId,
+        latitude,
+        longitude,
         cost: cost ? parseFloat(cost) : null,
         block: (block as Activity["block"]) || null,
       });
@@ -186,11 +199,16 @@ export function ActivityForm({
 
           <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
-            <Input
-              id="location"
-              placeholder="La Sagrada Familia, Barcelona"
+            <PlacesAutocomplete
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={setLocation}
+              onPlaceSelect={(place) => {
+                setLocation(place.name);
+                setPlaceId(place.placeId);
+                setLatitude(place.latitude);
+                setLongitude(place.longitude);
+              }}
+              placeholder="Search for a place..."
             />
           </div>
 

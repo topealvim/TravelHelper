@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { GoogleMapsProvider } from "@/components/maps/GoogleMapsProvider";
 
 export const metadata: Metadata = {
   title: "TravelHelper - Family Trip Planner",
@@ -13,7 +14,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="font-sans antialiased">{children}</body>
+      <body className="font-sans antialiased">
+        <GoogleMapsProvider>{children}</GoogleMapsProvider>
+      </body>
     </html>
   );
 }
