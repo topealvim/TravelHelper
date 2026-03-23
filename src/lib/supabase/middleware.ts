@@ -29,11 +29,10 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Redirect unauthenticated users to login (except for login page and public pages)
+  // Redirect unauthenticated users to login (except for login page)
   const isLoginPage = request.nextUrl.pathname === "/login";
-  const isPublicPage = request.nextUrl.pathname === "/";
 
-  if (!user && !isLoginPage && !isPublicPage) {
+  if (!user && !isLoginPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
