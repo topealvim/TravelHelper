@@ -47,13 +47,21 @@ export function Header() {
               {profile.display_name}
             </span>
           )}
-          {profile?.avatar_url && (
+          {profile?.avatar_url ? (
             <img
               src={profile.avatar_url}
               alt=""
               className="h-8 w-8 rounded-full"
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
             />
-          )}
+          ) : profile?.display_name ? (
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white text-sm font-medium">
+              {profile.display_name.charAt(0).toUpperCase()}
+            </div>
+          ) : null}
           <Button variant="ghost" size="icon" onClick={handleSignOut}>
             <LogOut className="h-4 w-4" />
           </Button>
